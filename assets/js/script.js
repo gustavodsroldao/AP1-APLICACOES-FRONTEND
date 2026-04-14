@@ -1,4 +1,3 @@
-const items = [];
 let nextId = 1;
 let lastApiUrl = "";
 
@@ -17,102 +16,44 @@ const reloadButton = document.getElementById("reload-button");
 const studyList = document.getElementById("study-list");
 const emptyState = document.getElementById("empty-state");
 
-function setFeedback(message, type = "") {
-  feedback.textContent = message;
-  feedback.className = "feedback";
+reloadButton.textContent = "Recarregar ultima busca";
+
+function showMessage(element, message, type = "") {
+  element.textContent = message;
+  element.className = "feedback";
 
   if (type) {
-    feedback.classList.add(`feedback--${type}`);
+    element.classList.add(`feedback--${type}`);
   }
 }
 
-function setApiFeedback(message, type = "") {
-  apiFeedback.textContent = message;
-  apiFeedback.className = "feedback";
-
-  if (type) {
-    apiFeedback.classList.add(`feedback--${type}`);
-  }
-}
-
-function setStatusMessage(message = "") {
+function showStatus(message = "") {
   statusMessage.textContent = message;
   statusMessage.hidden = !message;
 }
 
 function updateEmptyState() {
-  emptyState.hidden = items.length > 0;
+  emptyState.hidden = studyList.children.length > 0;
 }
 
-function updateReloadButton() {
-  reloadButton.textContent = "Recarregar ultima busca";
-  reloadButton.disabled = !lastApiUrl;
-}
-
-function setApiLoading(isLoading) {
-  const apiSubmitButton = apiForm?.querySelector('button[type="submit"]');
-
-  if (apiSubmitButton) {
-    apiSubmitButton.disabled = isLoading;
-    apiSubmitButton.textContent = isLoading
-      ? "Carregando..."
-      : "Buscar sugestoes";
-  }
-
-  reloadButton.disabled = isLoading || !lastApiUrl;
-  apiUserIdInput.disabled = isLoading;
-}
-
-function validateTitle(title) {
-  const normalizedTitle = title.trim();
-
-  if (!normalizedTitle) {
-    return "O titulo nao pode ficar vazio.";
-  }
-
-  if (normalizedTitle.length < 3) {
-    return "O titulo deve ter pelo menos 3 caracteres.";
-  }
-
-  return "";
-}
-
-function validateUserId(userId) {
-  const normalizedUserId = userId.trim();
-
-  if (!normalizedUserId) {
-    return "";
-  }
-
-  const parsedUserId = Number(normalizedUserId);
-  const isInteger = Number.isInteger(parsedUserId);
-
-  if (!isInteger || parsedUserId < 1 || parsedUserId > 10) {
-    return "Informe um userId inteiro entre 1 e 10.";
-  }
-
-  return "";
-}
-
-function createStudyItem(item) {
+function createStudyItem(title, source = "manual", userId = "", completed = false) {
   const li = document.createElement("li");
   li.className = "study-item";
-  li.dataset.id = String(item.id);
+  li.dataset.id = String(nextId++);
+  li.dataset.source = source;
 
   const content = document.createElement("div");
   content.className = "study-item__content";
 
-  const title = document.createElement("p");
-  title.className = "study-item__title";
-  title.textContent = item.title;
+  const itemTitle = document.createElement("p");
+  itemTitle.className = "study-item__title";
+  itemTitle.textContent = title;
 
   const meta = document.createElement("p");
   meta.className = "study-item__meta";
   meta.textContent =
-    item.source === "api"
-      ? `Sugestao da API | userId: ${item.userId} | status: ${
-          item.completed ? "concluida" : "pendente"
-        }`
+    source === "api"
+      ? `Sugestao da API | userId: ${userId} | status: ${completed ? "concluida" : "pendente"}`
       : "Item criado manualmente";
 
   const removeButton = document.createElement("button");
@@ -121,48 +62,43 @@ function createStudyItem(item) {
   removeButton.dataset.action = "remove";
   removeButton.textContent = "Remover";
 
-  content.append(title, meta);
+  content.append(itemTitle, meta);
   li.append(content, removeButton);
-
-  return li;
+  studyList.appendChild(li);
+  updateEmptyState();
 }
 
-function renderList() {
-  studyList.replaceChildren();
+function removeApiItems() {
+  const apiItems = studyList.querySelectorAll('li[data-source="api"]');
 
-  items.forEach((item) => {
-    studyList.appendChild(createStudyItem(item));
+  apiItems.forEach((item) => {
+    item.remove();
   });
 
   updateEmptyState();
 }
 
-function addItem(item) {
-  items.push(item);
-  renderList();
-}
+function toggleApiLoading(isLoading) {
+  const apiButton = apiForm?.querySelector('button[type="submit"]');
 
-function removeItem(itemId) {
-  const index = items.findIndex((item) => item.id === itemId);
-
-  if (index === -1) {
-    return;
+  if (apiButton) {
+    apiButton.disabled = isLoading;
+    apiButton.textContent = isLoading ? "Carregando..." : "Buscar sugestoes";
   }
 
-  items.splice(index, 1);
-  renderList();
+  apiUserIdInput.disabled = isLoading;
+  reloadButton.disabled = isLoading || !lastApiUrl;
 }
 
-function removeApiItems() {
-  const manualItems = items.filter((item) => item.source === "manual");
-  items.length = 0;
-  items.push(...manualItems);
+function getApiUrl(userId) {
+  const baseUrl = "https://jsonplaceholder.typicode.com/todos";
+  return userId ? `${baseUrl}?userId=${userId}` : baseUrl;
 }
 
-async function fetchSuggestions(url) {
-  setApiLoading(true);
-  setApiFeedback("");
-  setStatusMessage("Carregando sugestoes da API...");
+async function loadSuggestions(url) {
+  toggleApiLoading(true);
+  showMessage(apiFeedback, "");
+  showStatus("Carregando sugestoes da API...");
 
   try {
     const response = await fetch(url);
@@ -176,78 +112,56 @@ async function fetchSuggestions(url) {
     removeApiItems();
 
     todos.forEach((todo) => {
-      items.push({
-        id: nextId++,
-        title: todo.title,
-        source: "api",
-        userId: todo.userId,
-        completed: todo.completed,
-      });
+      createStudyItem(todo.title, "api", todo.userId, todo.completed);
     });
 
-    renderList();
-
     if (todos.length === 0) {
-      setApiFeedback("Nenhuma sugestao encontrada para essa busca.", "error");
-      setStatusMessage("Busca concluida sem resultados.");
+      showMessage(apiFeedback, "Nenhuma sugestao encontrada para essa busca.", "error");
+      showStatus("Busca concluida sem resultados.");
       return;
     }
 
-    setApiFeedback(`${todos.length} sugestao(oes) adicionada(s).`, "success");
-    setStatusMessage("Sugestoes carregadas com sucesso.");
+    showMessage(apiFeedback, `${todos.length} sugestao(oes) adicionada(s).`, "success");
+    showStatus("Sugestoes carregadas com sucesso.");
   } catch (error) {
-    setApiFeedback(
+    showMessage(
+      apiFeedback,
       error instanceof Error
         ? error.message
         : "Ocorreu um erro inesperado ao buscar a API.",
       "error"
     );
-    setStatusMessage("Falha ao carregar as sugestoes.");
+    showStatus("Falha ao carregar as sugestoes.");
   } finally {
-    setApiLoading(false);
-    updateReloadButton();
+    toggleApiLoading(false);
   }
-}
-
-function buildApiUrl(userId) {
-  const baseUrl = "https://jsonplaceholder.typicode.com/todos";
-  const normalizedUserId = userId.trim();
-
-  return normalizedUserId
-    ? `${baseUrl}?userId=${encodeURIComponent(normalizedUserId)}`
-    : baseUrl;
 }
 
 studyForm.addEventListener("submit", (event) => {
   event.preventDefault();
 
   const title = studyInput.value.trim();
-  const validationMessage = validateTitle(title);
 
-  if (validationMessage) {
-    setFeedback(validationMessage, "error");
+  if (!title) {
+    showMessage(feedback, "O titulo nao pode ficar vazio.", "error");
     return;
   }
 
-  addItem({
-    id: nextId++,
-    title,
-    source: "manual",
-  });
+  if (title.length < 3) {
+    showMessage(feedback, "O titulo deve ter pelo menos 3 caracteres.", "error");
+    return;
+  }
 
+  createStudyItem(title);
   studyInput.value = "";
-  setFeedback("Item adicionado com sucesso.", "success");
+  showMessage(feedback, "Item adicionado com sucesso.", "success");
   studyInput.focus();
 });
 
 studyList.addEventListener("click", (event) => {
   const target = event.target;
 
-  if (!(target instanceof HTMLElement)) {
-    return;
-  }
-
-  if (target.dataset.action !== "remove") {
+  if (!(target instanceof HTMLElement) || target.dataset.action !== "remove") {
     return;
   }
 
@@ -257,35 +171,39 @@ studyList.addEventListener("click", (event) => {
     return;
   }
 
-  removeItem(Number(listItem.dataset.id));
-  setStatusMessage("Item removido da lista.");
+  listItem.remove();
+  updateEmptyState();
+  showStatus("Item removido da lista.");
 });
 
 apiForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const userId = apiUserIdInput.value.trim();
-  const validationMessage = validateUserId(userId);
 
-  if (validationMessage) {
-    setApiFeedback(validationMessage, "error");
-    setStatusMessage("");
-    return;
+  if (userId) {
+    const userIdNumber = Number(userId);
+
+    if (!Number.isInteger(userIdNumber) || userIdNumber < 1 || userIdNumber > 10) {
+      showMessage(apiFeedback, "Informe um userId inteiro entre 1 e 10.", "error");
+      showStatus("");
+      return;
+    }
   }
 
-  lastApiUrl = buildApiUrl(userId);
-  updateReloadButton();
-  await fetchSuggestions(lastApiUrl);
+  lastApiUrl = getApiUrl(userId);
+  reloadButton.disabled = false;
+  await loadSuggestions(lastApiUrl);
 });
 
 reloadButton.addEventListener("click", async () => {
   if (!lastApiUrl) {
-    setApiFeedback("Faca uma busca na API antes de recarregar.", "error");
+    showMessage(apiFeedback, "Faca uma busca na API antes de recarregar.", "error");
     return;
   }
 
-  await fetchSuggestions(lastApiUrl);
+  await loadSuggestions(lastApiUrl);
 });
 
 updateEmptyState();
-updateReloadButton();
+reloadButton.disabled = true;
