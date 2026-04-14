@@ -5,9 +5,7 @@ const studyForm = document.getElementById("study-form");
 const studyInput = document.getElementById("study-input");
 const feedback = document.getElementById("feedback");
 
-const apiForm =
-  document.getElementById("api-form") ||
-  document.querySelector('form[action="api-form"]');
+const apiForm = document.getElementById("api-form");
 const apiUserIdInput = document.getElementById("api-user-id");
 const apiFeedback = document.getElementById("api-feedback");
 const statusMessage = document.getElementById("status-message");
@@ -16,7 +14,7 @@ const reloadButton = document.getElementById("reload-button");
 const studyList = document.getElementById("study-list");
 const emptyState = document.getElementById("empty-state");
 
-reloadButton.textContent = "Recarregar ultima busca";
+reloadButton.textContent = "Recarregar última busca";
 
 function showMessage(element, message, type = "") {
   element.textContent = message;
@@ -53,7 +51,7 @@ function createStudyItem(title, source = "manual", userId = "", completed = fals
   meta.className = "study-item__meta";
   meta.textContent =
     source === "api"
-      ? `Sugestao da API | userId: ${userId} | status: ${completed ? "concluida" : "pendente"}`
+      ? `Sugestão da API | userId: ${userId} | status: ${completed ? "concluída" : "pendente"}`
       : "Item criado manualmente";
 
   const removeButton = document.createElement("button");
@@ -79,13 +77,10 @@ function removeApiItems() {
 }
 
 function toggleApiLoading(isLoading) {
-  const apiButton = apiForm?.querySelector('button[type="submit"]');
+  const apiButton = apiForm.querySelector('button[type="submit"]');
 
-  if (apiButton) {
-    apiButton.disabled = isLoading;
-    apiButton.textContent = isLoading ? "Carregando..." : "Buscar sugestoes";
-  }
-
+  apiButton.disabled = isLoading;
+  apiButton.textContent = isLoading ? "Carregando..." : "Buscar sugestões";
   apiUserIdInput.disabled = isLoading;
   reloadButton.disabled = isLoading || !lastApiUrl;
 }
@@ -98,13 +93,13 @@ function getApiUrl(userId) {
 async function loadSuggestions(url) {
   toggleApiLoading(true);
   showMessage(apiFeedback, "");
-  showStatus("Carregando sugestoes da API...");
+  showStatus("Carregando sugestões da API...");
 
   try {
     const response = await fetch(url);
 
     if (!response.ok) {
-      throw new Error("Nao foi possivel carregar as sugestoes.");
+      throw new Error("Não foi possível carregar as sugestões.");
     }
 
     const todos = await response.json();
@@ -116,13 +111,13 @@ async function loadSuggestions(url) {
     });
 
     if (todos.length === 0) {
-      showMessage(apiFeedback, "Nenhuma sugestao encontrada para essa busca.", "error");
-      showStatus("Busca concluida sem resultados.");
+      showMessage(apiFeedback, "Nenhuma sugestão encontrada para essa busca.", "error");
+      showStatus("Busca concluída sem resultados.");
       return;
     }
 
-    showMessage(apiFeedback, `${todos.length} sugestao(oes) adicionada(s).`, "success");
-    showStatus("Sugestoes carregadas com sucesso.");
+    showMessage(apiFeedback, `${todos.length} sugestão(ões) adicionada(s).`, "success");
+    showStatus("Sugestões carregadas com sucesso.");
   } catch (error) {
     showMessage(
       apiFeedback,
@@ -131,7 +126,7 @@ async function loadSuggestions(url) {
         : "Ocorreu um erro inesperado ao buscar a API.",
       "error"
     );
-    showStatus("Falha ao carregar as sugestoes.");
+    showStatus("Falha ao carregar as sugestões.");
   } finally {
     toggleApiLoading(false);
   }
@@ -143,12 +138,12 @@ studyForm.addEventListener("submit", (event) => {
   const title = studyInput.value.trim();
 
   if (!title) {
-    showMessage(feedback, "O titulo nao pode ficar vazio.", "error");
+    showMessage(feedback, "O título não pode ficar vazio.", "error");
     return;
   }
 
   if (title.length < 3) {
-    showMessage(feedback, "O titulo deve ter pelo menos 3 caracteres.", "error");
+    showMessage(feedback, "O título deve ter pelo menos 3 caracteres.", "error");
     return;
   }
 
@@ -176,7 +171,7 @@ studyList.addEventListener("click", (event) => {
   showStatus("Item removido da lista.");
 });
 
-apiForm?.addEventListener("submit", async (event) => {
+apiForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const userId = apiUserIdInput.value.trim();
@@ -198,7 +193,7 @@ apiForm?.addEventListener("submit", async (event) => {
 
 reloadButton.addEventListener("click", async () => {
   if (!lastApiUrl) {
-    showMessage(apiFeedback, "Faca uma busca na API antes de recarregar.", "error");
+    showMessage(apiFeedback, "Faça uma busca na API antes de recarregar.", "error");
     return;
   }
 

@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Aula 4 - Lista de estudos</title>
+    <title>Lista de estudos</title>
     <link rel="stylesheet" href="assets/css/style.css"/>
 </head>
 <body>
 <header class="hero">
     <div class="container">
-        <p class="eyebrow">Aplicacoes Front-End</p>
+        <p class="eyebrow">Aplicações Front-End</p>
         <h1>Lista de estudos do dia</h1>
         <p class="hero__text">
-            Pratica de DOM, eventos, validacao simples e lista dinamica.
+            Prática de DOM, eventos, validação simples e lista dinâmica.
         </p>
     </div>
 </header>
@@ -39,14 +39,14 @@
     </section>
 
     <section class="panel">
-        <h2>Sugestões da API </h2>
-            <p class="panel__subtitle">
-                Evolua a lista da Aula 4 consumindo a API JSON placeholder (`/todos`).
-                Use umm userID de 1 a 10 ou deixe em branco.
-            </p>
-        <form action="api-form" class="study-form">
+        <h2>Sugestões da API</h2>
+        <p class="panel__subtitle">
+            Evolua a lista consumindo a API JSONPlaceholder (`/todos`).
+            Use um User ID de 1 a 10 ou deixe em branco.
+        </p>
+        <form id="api-form" class="study-form">
             <label class="field">
-                <span>UserID</span>
+                <span>User ID</span>
                 <input
                         id="api-user-id"
                         type="text"
@@ -61,22 +61,19 @@
         </form>
 
         <p id="api-feedback" class="feedback" aria-live="polite"></p>
-
     </section>
 
     <section class="panel">
-
-
         <div class="panel__header">
             <div>
-                <h2>Lista dinamica</h2>
-                <p class="panel__subtitle">Adicione atividades e remova quando nao precisar mais.</p>
+                <h2>Lista dinâmica</h2>
+                <p class="panel__subtitle">Adicione atividades e remova quando não precisar mais.</p>
             </div>
             <button id="reload-button" class="btn btn--ghost" type="button"></button>
         </div>
 
         <p id="status-message" class="status" aria-live="polite" hidden>
-            Sei lá.
+            Aguardando ações.
         </p>
 
         <p id="empty-state" class="empty-state" hidden>
